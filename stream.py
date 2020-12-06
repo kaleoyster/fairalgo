@@ -13,51 +13,30 @@ import numpy
 import random
 import csv
 
-# develope a basic linear regression model on the adult dataset
-def detect_concept_dift(currentStream, previousStream):
-    threshold = 0
-    difference = 0
-    for currentInstance, previousAvg in zip(currentStream, previousStream):
-        difference = difference + (previousAvg - currentInstance)
-
-    if difference > threshold:
-        return True
-    else:
-        return False
-
-def online_algorithm(stream):
-    classification = list()
-    for instance in stream:
-        classification.append(instance[-1])
-    return classification
-
-def produce_stream(randomGenerator):
-    noOfAttributes = 3
-    streamLength = 10
-
-    gender = ['Male', 'Female']
-    race = ['White', 'Black']
-    label = ['No', 'Yes']
-
-    streamAge = randomGenerator.uniform(15, 67, streamLength)
-    streamGender = random.choices(gender, k=streamLength)
-    streamRace = random.choices(race, k=streamLength)
-    streamLabel = random.choices(label, k=streamLength)
-
-    streamOfInstances = list()
-    for time in range(0, streamLength):
-        instance = list()
-        instance.append(streamAge[time])
-        instance.append(streamGender[time])
-        instance.append(streamRace[time])
-        instance.append(streamLabel[time])
-        streamOfInstances.append(instance)
-    return streamOfInstances
 
 def read_header(filename):
     with open(filename, 'r') as headerFile:
         headerReader = csv.reader(headerFile, delimiter=',')
         header = next(headerReader)
+    return header
+
+def return_header():
+    header = ['age',
+              'workclass',
+              'fnlwgt',
+              'education',
+              'education-num',
+              'marital-status',
+              'occupation',
+              'relationship',
+              'race',
+              'sex',
+              'capital-gain',
+              'capital-loss',
+              'hours-per-week',
+              'native-country',
+              'salary'
+            ]
     return header
 
 def read_csv(filename):
@@ -69,6 +48,38 @@ def read_csv(filename):
             data.append(row)
     return data
 
+def predict_record(record):
+    return record[-1]
+
+def fairness_metric(predictions, groundTruth):
+
+    return fairnessMetric
+def simulation(data):
+    """
+    description:
+        simulate the online prediction of streaming records
+    """
+    groundTruth = list()
+    predicted = list()
+    # implement variable windows:
+    # implement function to identify sensitive variables:
+        # 1. age
+        # 2. race
+        # 3. native country 
+        # 4. sex
+    windowOfData = select_window(data, groudTruth)
+    results = predict_record(windowOfData)
+    fairness = compute_fairness(results)
+
+#    for record in data:
+#        try:
+#            predicted.append(predict_record(record))
+#        except:
+#            # log errors
+#            print("Invalid record", record)
+
+    return fairnessMetric,
+
 def main():
     """
     Driver function
@@ -76,8 +87,8 @@ def main():
     filename = 'dataset/adult.data'
     headerfile = 'dataset/adult.names'
     data = read_csv(filename)
-    header = read_header(headerfile)
-    print(header)
+    header = return_header()
+    print(simulation(data))
 
 if __name__ =='__main__':
     main()

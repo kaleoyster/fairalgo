@@ -13,7 +13,10 @@ __email__='akale@unomaha.edu'
 import numpy
 import random
 import csv
+#from parity.fairness_metrics import show_bias
 
+# TODO:
+    # 1. Add fairness metrics
 def read_header(filename):
     """
     description:

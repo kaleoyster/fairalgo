@@ -13,10 +13,10 @@ __email__='akale@unomaha.edu'
 import numpy
 import random
 import csv
-#from parity.fairness_metrics import show_bias
 
 # TODO:
     # 1. Add fairness metrics
+    # 2.  
 def read_header(filename):
     """
     description:
@@ -30,9 +30,11 @@ def read_header(filename):
 
 def return_header():
     """
-    description:
+    description: returns the header of adult dataset
     args:
+        None
     returns:
+        header (list): a list of column names of adult dataset
     """
     header = ['age',
               'workclass',
@@ -54,9 +56,11 @@ def return_header():
 
 def read_csv(filename):
     """
-    description:
+    description: reads csv file and return list of values
     args:
+        filename (string): path of the file
     returns:
+        data (list of list): returns a list of list (column values)
     """
     data = list()
     with open(filename, 'r') as csvFile:
@@ -68,6 +72,7 @@ def read_csv(filename):
 
 def predict_record(record):
     """
+    TODO
     description:
     args:
     returns:
@@ -76,6 +81,7 @@ def predict_record(record):
 
 def fairness_metric(predictions, groundTruth):
     """
+    TODO
     description:
     args:
     returns:
@@ -85,6 +91,7 @@ def fairness_metric(predictions, groundTruth):
 
 def simulation(data):
     """
+    TODO
     description:
         simulate the online prediction of streaming records
     args:

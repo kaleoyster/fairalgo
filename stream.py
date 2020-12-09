@@ -116,6 +116,9 @@ def main():
     filename = 'dataset/adult.data'
     headerfile = 'dataset/adult.names'
     data = read_csv(filename)
+    # read data using a pandas pd
+    # define parameters
+
     print(simulation(data))
 
 if __name__ =='__main__':

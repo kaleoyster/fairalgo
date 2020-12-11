@@ -16,12 +16,12 @@ import csv
 
 # TODO:
     # 1. Add fairness metrics
-    # 2.  
+    # 2. Use test fairness code to build streaming pipeline simulation
 def read_header(filename):
     """
     description:
     args:
-    returnsG
+    returns: 
     """
     with open(filename, 'r') as headerFile:
         headerReader = csv.reader(headerFile, delimiter=',')

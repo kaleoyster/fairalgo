@@ -143,15 +143,28 @@ def create_window(data, columnNames, windowSize=10):
     labelDict = {' <=50K': 1,
                  ' >50K': 0 }
 
-    data = data[:windowSize]
+
+    windowData = list()
+    currentWindowSize = 0
+    while  currentWindowSize < windowSize:
+        tempData = data.pop()
+        if tempData != list():
+            windowData.append(tempData)
+            currentWindowSize = currentWindowSize + 1
+
+
     dictionary = defaultdict(list)
-    for row in data:
+    for row in windowData:
         for colName, val in zip(columnNames, row):
             if colName == sensitiveVariable:
-                binaryVal =  senVarDict[val]
+                binaryVal =  senVarDict.get(val)
+                if binaryVal == None:
+                   binaryVal = 0
                 dictionary[colName].append(binaryVal)
             elif colName == label:
-                binaryVal = labelDict[val]
+                binaryVal = labelDict.get(val)
+                if binaryVal == None:
+                   binaryVal = 0
                 dictionary[colName].append(binaryVal)
             else:
                 dictionary[colName].append(val)
@@ -163,8 +176,9 @@ def create_Xy(dictionary, label):
         create a pandas dataframe, separates X and y
     args:
         dictionary (dict):
-        label (string): 
+        label (string):
     """
+    print(dictionary)
     df = pd.DataFrame(dictionary)
     X = df.drop(columns=label)
     y = df[label]
@@ -185,10 +199,8 @@ def main():
 
     # Every dictionary is resembles a window
     columnNames = return_header()
-    windowData = create_window(data, columnNames)
 
     # create training and testing data
-    X, y = create_Xy(windowData, label)
 
     # Test model 
     model = types.SimpleNamespace()
@@ -197,6 +209,8 @@ def main():
 
     # print equal opportunity score
     for time in range(100):
+        windowData = create_window(data, columnNames)
+        X, y = create_Xy(windowData, label)
         print('equal opportunity score:', equal_opportunity_score(sensitive_column="sex")(model, X, y))
 
 

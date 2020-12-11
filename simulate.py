@@ -16,19 +16,18 @@ import random
 import csv
 import types
 import matplotlib.pylab as plt
+from tqdm import tqdm
 from collections import defaultdict
 from sklego.metrics import equal_opportunity_score
 from sklego.metrics import p_percent_score
 from sklearn.linear_model import LogisticRegression
 
-# TODO:
-    # 1. Add fairness metrics
-    # 2. Use test fairness code to build streaming pipeline simulation
 def read_header(filename):
     """
+    *Dead code*
     description:
     args:
-    returns: 
+    returns:
     """
     with open(filename, 'r') as headerFile:
         headerReader = csv.reader(headerFile, delimiter=',')
@@ -79,7 +78,7 @@ def read_csv(filename):
 
 def predict_record(record):
     """
-    TODO
+    *Dead Code*
     description:
     args:
     returns:
@@ -96,32 +95,17 @@ def fairness_metric(predictions, groundTruth):
     fairnessMetric = None
     return fairnessMetric
 
-def simulation(data):
+def get_data(data, windowSize):
     """
-    TODO
-    description:
-        simulate the online prediction of streaming records
-    args:
-    returns:
     """
-    groundTruth = list()
-    predicted = list()
-    # implement variable windows:
-    # implement function to identify sensitive variables:
-        # 1. age
-        # 2. race
-        # 3. native country 
-        # 4. sex
-    #windowOfData = select_window(data, groudTruth)
-    #results = predict_record(windowOfData)
-    #fairness = compute_fairness(results)
-    for record in data:
-        try:
-            predicted.append(predict_record(record))
-        except:
-            print("Invalid record", record)
-
-    return predicted
+    windowData = list()
+    currentWindowSize = 0
+    while  currentWindowSize < windowSize:
+        tempData = data.pop()
+        if tempData != list():
+            windowData.append(tempData)
+            currentWindowSize = currentWindowSize + 1
+    return windowData
 
 def create_window(data, columnNames, windowSize=10):
     """
@@ -143,16 +127,9 @@ def create_window(data, columnNames, windowSize=10):
     labelDict = {' <=50K': 1,
                  ' >50K': 0 }
 
+    windowData = get_data(data, windowSize)
 
-    windowData = list()
-    currentWindowSize = 0
-    while  currentWindowSize < windowSize:
-        tempData = data.pop()
-        if tempData != list():
-            windowData.append(tempData)
-            currentWindowSize = currentWindowSize + 1
-
-
+    # prepare_data
     dictionary = defaultdict(list)
     for row in windowData:
         for colName, val in zip(columnNames, row):
@@ -177,13 +154,45 @@ def create_Xy(dictionary, label):
     args:
         dictionary (dict):
         label (string):
+
+    returns:
+        X (list of list): list of independent variables
+        y (list): classification label / ground truth
     """
-    print(dictionary)
     df = pd.DataFrame(dictionary)
     X = df.drop(columns=label)
     y = df[label]
-
     return X, y
+
+def simulate_eo(data, columnNames, label, model, numOfSimulation=100):
+    """
+    description:
+        runs simulation based on the number of simulations
+
+    args:
+        data (list of list): list of attributes and values
+        label (string): classification label / ground truth
+        model (classification model): sckit classification model
+        numOfSimulation (int): number of simulations to run
+
+    returns:
+        equalOpportunities (list): list of equal opportunities
+    """
+    numOfSimulation = 1000
+    equalOpportunities = list()
+    for time in tqdm(range(numOfSimulation)):
+       windowData = create_window(data, columnNames)
+       X, y = create_Xy(windowData, label)
+       eqTemp = equal_opportunity_score(sensitive_column="sex")(model, X, y)
+       equalOpportunities.append(eqTemp)
+    return equalOpportunities
+
+def plot_equal_opportunity(equalOpData):
+    plt.plot(equalOpData)
+    plt.title('Equal opportunity score v. runs')
+    plt.xlabel('Number of runs')
+    plt.ylabel('Equal opportunity score')
+    plt.show()
 
 def main():
     """
@@ -195,26 +204,17 @@ def main():
     data = read_csv(filename)
     label = 'salary'
 
-    # Train a model on the initial model
-
     # Every dictionary is resembles a window
     columnNames = return_header()
 
-    # create training and testing data
-
-    # Test model 
+    # Train a model on the initial model (TODO)
+    # define model
     model = types.SimpleNamespace()
-    model.predict = lambda X: numpy.array([' <=50K', ' <=50K', ' <=50K', ' <=50K', ' <=50K', ' <=50K', ' >50K', ' >50K', ' >50K', ' >50K'])
     model.predict = lambda X: numpy.array([0, 1, 0, 1, 1, 1, 1, 0, 0, 0])
 
     # print equal opportunity score
-    for time in range(100):
-        windowData = create_window(data, columnNames)
-        X, y = create_Xy(windowData, label)
-        print('equal opportunity score:', equal_opportunity_score(sensitive_column="sex")(model, X, y))
-
-
-    #print(simulation(data))
+    equalOpData = simulate_eo(data, columnNames, label, model)
+    plot_equal_opportunity(equalOpData)
 
 if __name__ =='__main__':
     main()

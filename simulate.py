@@ -16,6 +16,7 @@ import random
 import csv
 import types
 import matplotlib.pylab as plt
+from collections import Counter
 from tqdm import tqdm
 from collections import defaultdict
 from sklego.metrics import equal_opportunity_score
@@ -182,17 +183,88 @@ def simulate_eo(data, columnNames, label, model, numOfSimulation=100):
     equalOpportunities = list()
     for time in tqdm(range(numOfSimulation)):
        windowData = create_window(data, columnNames)
+       print(windowData)
        X, y = create_Xy(windowData, label)
        eqTemp = equal_opportunity_score(sensitive_column="sex")(model, X, y)
        equalOpportunities.append(eqTemp)
     return equalOpportunities
 
 def plot_equal_opportunity(equalOpData):
+    """
+    description:
+    args:
+    returns:
+    """
     plt.plot(equalOpData)
     plt.title('Equal opportunity score v. runs')
     plt.xlabel('Number of runs')
     plt.ylabel('Equal opportunity score')
     plt.show()
+
+def preprocess_columns(X, y):
+    X['workclass'] = X['workclass'].map({' self-emp-inc': '1', ' Private': '0'})
+    return X, y
+
+def create_model(X, y):
+    """
+    description:
+    args:
+    returns
+    """
+    model = LogisticRegression(random_state=0)
+
+    # TODO:
+        # 1. Need a processing strategy
+        # 2. Select the columns 
+    # Categorical 
+    #X['workclass'] = X['workclass'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Numeric 
+    #X['fnlwgt'] = X['fnlwgt'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Categorical 
+    #X['education'] = X['education'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Categorical
+    #X['education-num'] = X['edeucation-num'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Categorical
+    #X['maritial-status'] = X['maritial-status'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Categorical 
+    #X['occupation'] = X['occupation'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Categorical 
+    #X['relationship'] = X['relationship'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Categorical
+    #X['race'] = X['race'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Categorical
+    #X['sex'] = X['sex'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Numerical 
+    #X['capital-gain'] = X['capital-gain'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Numerical 
+    #X['hours-per-week'] = X['hours-per-week'].map({' self-emp-inc': '1', ' Private': '0'})
+
+    # Categorical
+    #X['native-country'] = X['native-country'].map({' self-emp-inc': '1', ' Private': '0'})
+    print(X.columns)
+
+    print("Workslcass")
+    print(Counter(X['workclass']))
+
+    print("occupation")
+    print(Counter(X['hours-per-week']))
+
+    #print("fnlwgt")
+    #print(Counter(X['fnlwgt']))
+
+    #print(X['workclass'])
+    model = model.fit(X, y)
+    return model
 
 def main():
     """
@@ -201,20 +273,28 @@ def main():
     filename = 'dataset/adult.data'
     headerfile = 'dataset/adult.names'
 
+    trainFilename = 'dataset/trainadult.data'
+    trainFilename = 'dataset/trainadult.names'
+
     data = read_csv(filename)
     label = 'salary'
 
     # Every dictionary is resembles a window
     columnNames = return_header()
 
+    windowData = create_window(data, columnNames, windowSize=1000)
+    X, y = create_Xy(windowData, label)
+
     # Train a model on the initial model (TODO)
     # define model
-    model = types.SimpleNamespace()
-    model.predict = lambda X: numpy.array([0, 1, 0, 1, 1, 1, 1, 0, 0, 0])
+    #model = types.SimpleNamespace()
+    #model.predict = lambda X: numpy.array([0, 1, 0, 1, 1, 1, 1, 0, 0, 0])
+    model = create_model(X, y)
+    print(model)
 
     # print equal opportunity score
-    equalOpData = simulate_eo(data, columnNames, label, model)
-    plot_equal_opportunity(equalOpData)
+    #equalOpData = simulate_eo(data, columnNames, label, model)
+    #plot_equal_opportunity(equalOpData)
 
 if __name__ =='__main__':
     main()

@@ -20,6 +20,14 @@ from collections import Counter
 from tqdm import tqdm
 from collections import defaultdict
 from sklego.metrics import equal_opportunity_score
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.tree import DecisionTreeClassifier
 from sklego.metrics import p_percent_score
 from sklearn.linear_model import LogisticRegression
 
@@ -112,6 +120,7 @@ def create_window(data, columnNames, windowSize=10):
     """
     description:
         creates windows of dataset and returns a dictionary of attributes
+        This function also preprocess dataset
     args:
         data (list of list): contains a list of list of dataset values
         columnNames (list): list of attribute names
@@ -146,6 +155,7 @@ def create_window(data, columnNames, windowSize=10):
                 dictionary[colName].append(binaryVal)
             else:
                 dictionary[colName].append(val)
+    #print(dictionary)
     return dictionary
 
 def create_Xy(dictionary, label):
@@ -165,6 +175,59 @@ def create_Xy(dictionary, label):
     y = df[label]
     return X, y
 
+def create_col_value_mapping(colList):
+    mappings = {item:index for index, item in enumerate(colList)}
+    return mappings
+
+def preprocess_columns(X, y):
+    """
+    description:
+    args:
+    returns
+    """
+    workclassMap = create_col_value_mapping(X['workclass'].unique())
+    X['workclass'] = X['workclass'].map(workclassMap)
+
+    educationMap = create_col_value_mapping(X['education'].unique())
+    X['education'] = X['education'].map(educationMap)
+
+    maritalstatusMap = create_col_value_mapping(X['marital-status'].unique())
+    X['marital-status'] = X['marital-status'].map(maritalstatusMap)
+
+    occupationMap = create_col_value_mapping(X['occupation'].unique())
+    X['occupation'] = X['occupation'].map(occupationMap)
+
+    relationshipMap = create_col_value_mapping(X['relationship'].unique())
+    X['relationship'] = X['relationship'].map(relationshipMap)
+
+    raceMap = create_col_value_mapping(X['race'].unique())
+    X['race'] = X['race'].map(raceMap)
+
+    sexMap = create_col_value_mapping(X['sex'].unique())
+    X['sex'] = X['sex'].map(sexMap)
+
+    countryMap = create_col_value_mapping(X['native-country'].unique())
+    X['native-country'] = X['native-country'].map(countryMap)
+
+    return X, y
+
+def create_model(X, y):
+    model = DecisionTreeClassifier()
+    model = model.fit(X, y)
+    return model
+
+def compute_sensitive_ratio(windowData):
+    """
+    Description:
+    args:
+    returns:
+    """
+    maleCount = Counter(windowData)[0]
+    femaleCount = Counter(windowData)[1]
+    ratio = maleCount / (femaleCount + maleCount)
+    return ratio
+
+
 def simulate_eo(data, columnNames, label, model, numOfSimulation=100):
     """
     description:
@@ -181,17 +244,21 @@ def simulate_eo(data, columnNames, label, model, numOfSimulation=100):
     """
     numOfSimulation = 1000
     equalOpportunities = list()
+    sensitiveVariableCount = list()
     for time in tqdm(range(numOfSimulation)):
        windowData = create_window(data, columnNames)
-       print(windowData)
        X, y = create_Xy(windowData, label)
+       sensitiveVarCount = compute_sensitive_ratio(X['sex'])
+       X, y = preprocess_columns(X, y)
        eqTemp = equal_opportunity_score(sensitive_column="sex")(model, X, y)
        equalOpportunities.append(eqTemp)
-    return equalOpportunities
+       sensitiveVariableCount.append(sensitiveVarCount)
+    return equalOpportunities, sensitiveVariableCount
 
 def plot_equal_opportunity(equalOpData):
     """
     description:
+
     args:
     returns:
     """
@@ -199,80 +266,31 @@ def plot_equal_opportunity(equalOpData):
     plt.title('Equal opportunity score v. runs')
     plt.xlabel('Number of runs')
     plt.ylabel('Equal opportunity score')
-    plt.show()
+    plt.savefig('equalOpportunityScore.png')
+    #plt.show()
 
-def preprocess_columns(X, y):
-    X['workclass'] = X['workclass'].map({' self-emp-inc': '1', ' Private': '0'})
-    return X, y
-
-def create_model(X, y):
+def plot_sensitive_count(sensitiveCount):
     """
     description:
     args:
-    returns
+    returns:
     """
-    model = LogisticRegression(random_state=0)
-
-    # TODO:
-        # 1. Need a processing strategy
-        # 2. Select the columns 
-    # Categorical 
-    #X['workclass'] = X['workclass'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Numeric 
-    #X['fnlwgt'] = X['fnlwgt'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Categorical 
-    #X['education'] = X['education'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Categorical
-    #X['education-num'] = X['edeucation-num'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Categorical
-    #X['maritial-status'] = X['maritial-status'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Categorical 
-    #X['occupation'] = X['occupation'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Categorical 
-    #X['relationship'] = X['relationship'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Categorical
-    #X['race'] = X['race'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Categorical
-    #X['sex'] = X['sex'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Numerical 
-    #X['capital-gain'] = X['capital-gain'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Numerical 
-    #X['hours-per-week'] = X['hours-per-week'].map({' self-emp-inc': '1', ' Private': '0'})
-
-    # Categorical
-    #X['native-country'] = X['native-country'].map({' self-emp-inc': '1', ' Private': '0'})
-    print(X.columns)
-
-    print("Workslcass")
-    print(Counter(X['workclass']))
-
-    print("occupation")
-    print(Counter(X['hours-per-week']))
-
-    #print("fnlwgt")
-    #print(Counter(X['fnlwgt']))
-
-    #print(X['workclass'])
-    model = model.fit(X, y)
-    return model
+    plt.plot(sensitiveCount)
+    plt.title('Equal opportunity score v. runs')
+    plt.xlabel('Number of runs')
+    plt.ylabel('Equal opportunity score')
+    plt.savefig("sensitiveCount.png")
+    #plt.show()
 
 def main():
     """
     Driver function
     """
+    # files
     filename = 'dataset/adult.data'
     headerfile = 'dataset/adult.names'
 
+    # data
     trainFilename = 'dataset/trainadult.data'
     trainFilename = 'dataset/trainadult.names'
 
@@ -282,19 +300,18 @@ def main():
     # Every dictionary is resembles a window
     columnNames = return_header()
 
+    # Create a window -> add an aspect of time
     windowData = create_window(data, columnNames, windowSize=1000)
     X, y = create_Xy(windowData, label)
 
-    # Train a model on the initial model (TODO)
-    # define model
-    #model = types.SimpleNamespace()
-    #model.predict = lambda X: numpy.array([0, 1, 0, 1, 1, 1, 1, 0, 0, 0])
+    # Train a model on the initial model
+    X, y = preprocess_columns(X, y)
     model = create_model(X, y)
-    print(model)
 
-    # print equal opportunity score
-    #equalOpData = simulate_eo(data, columnNames, label, model)
-    #plot_equal_opportunity(equalOpData)
+    # Visualization 
+    equalOpData, sensitiveCount = simulate_eo(data, columnNames, label, model)
+    plot_equal_opportunity(equalOpData)
+    plot_sensitive_count(sensitiveCount)
 
 if __name__ =='__main__':
     main()

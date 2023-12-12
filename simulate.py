@@ -3,7 +3,7 @@ title: A fair online algorithm
 description:
     An online algorithm that attempts to provide fair allocation of resources.
     This algorithm is also sensitive to concept drift
-    The algorithm simulates streaming datasets, which is equal to stat
+    The algorithm simulates streaming datasets, which is equal to stat...?
 """
 
 __author__='Akshay Kale'
@@ -111,6 +111,7 @@ def create_window(data, columnNames, windowSize=10):
     """
     description:
         creates windows of dataset and returns a dictionary of attributes
+
     args:
         data (list of list): contains a list of list of dataset values
         columnNames (list): list of attribute names
